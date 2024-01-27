@@ -1,7 +1,7 @@
 {
   "name": "proclame/clubplanner-php-simple",
   "description": "",
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "license": "MIT",
   "type": "library",
   "authors": [
@@ -12,7 +12,7 @@
   ],
   "require": {
     "php": ">=8.0",
-    "guzzlehttp/guzzle": "7.9.x-dev"
+    "guzzlehttp/guzzle": "^7.0"
   },
   "autoload": {
     "psr-4": {
