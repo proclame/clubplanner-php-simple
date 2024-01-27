@@ -1,0 +1,22 @@
+{
+  "name": "proclame/clubplanner-php-simple",
+  "description": "",
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "type": "library",
+  "authors": [
+    {
+      "name": "Nick Mispoulier",
+      "email": "nick@proclame.be"
+    }
+  ],
+  "require": {
+    "php": ">=8.0",
+    "guzzlehttp/guzzle": "7.9.x-dev"
+  },
+  "autoload": {
+    "psr-4": {
+      "Proclame\\": "src/"
+    }
+  }
+}

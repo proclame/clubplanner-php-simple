@@ -1,30 +1,34 @@
 <?php
 
-namespace App\Lib;
+namespace Proclame;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 
 class ClubPlanner
 {
-    protected $cacheResults = true;
+
+    private Client $httpClient;
+
+    public function __construct(protected string $api_url, protected string $api_token)
+    {
+        $this->httpClient = new Client();
+
+    }
 
     /** Member Functions START */
     public function getMember($member_id)
     {
-        $member = $this->request('member/getmember', 'id=' . $member_id);
-
-        return property_exists($member, 'Id') ? $member : null;
+        return $this->request('member/getmember', 'id=' . $member_id);
     }
 
-    public function getMemberByEmail($email)
+    public function getMembersByEmail($email): array
+    {
+        return $this->getAllMembers([1, 2, 3, 4, 5], ' and email_address = \'' . $email . '\'');
+    }
+
+    public function getMemberByEmail($email) // finds first member with this email
     {
         return $this->request('member/getmember', 'email=' . $email);
-    }
-
-    public function getMembersByEmail($email)
-    {
-        return $this->request('member/getmembers', '', 'Email_Address=\'' . $email . '\'');
     }
 
     public function getSuspendedMembers()
@@ -32,7 +36,7 @@ class ClubPlanner
         return $this->request('member/getmembers', '', 'retention_status_id=-1');
     }
 
-    public function getAllMembers($owner_id = 0, $extra_arguments = '')
+    public function getAllMembers(array|int $owner_id = 0, $extra_arguments = ''): array
     {
         $stop = false;
         $allMembers = [];
@@ -80,12 +84,7 @@ class ClubPlanner
 
     public function forgotPassword($memberId): void
     {
-        dd($this->request('member/ForgotPassword', 'memberid=' . $memberId));
-    }
-
-    public function forgotPasswordByEmail(string $email): void
-    {
-        dd($this->request('member/ForgotPassword', 'email=' . $email));
+        var_dump($this->request('member/ForgotPassword', 'memberid=' . $memberId));
     }
 
     public function addMember($data)
@@ -93,33 +92,37 @@ class ClubPlanner
         return $this->request('member/AddMember', http_build_query($data));
     }
 
-    /*
-        public function addMember() // TEST
-        {
-            return $this->request('member/AddMember', 'firstname=Nick&lastname=TEST');
-        }
+    public function addSubscription($member_id, $sub_id, $startdate, $amount, $paymethod = '', $reference = '', $note = '')
+    {
+        return $this->request('member/AddSubscription', 'memberid=' . $member_id . '&subid=' . $sub_id . '&startdate=' . $startdate . '&amount=' . $amount . '&paymethod=' . $paymethod . '&reference=' . $reference . '&note=' . $note);
+    }
 
-        public function updateMemberInfo($member_id) // TEST
-        {
-            return $this->request('member/updatemember', 'memberid=' . $member_id . '&info10=TEST');
-        }
-    */
+    public function paySubscription($member_subscription_id, $amount, $paymethod = '', $reference = '')
+    {
+        return $this->request('member/PaySubscription', 'id=' . $member_subscription_id . '&amount=' . $amount . '&paymethod=' . $paymethod . '&reference=' . $reference);
+    }
+
+    public function updateMember($member_id, $updateData) // TEST
+    {
+        return $this->request('member/updatemember', 'memberid=' . $member_id . '&' . http_build_query($updateData));
+    }
+
     // Subscribe to newsletter
     public function subscribeMember($member_id): void
     {
-        $member = $this->request('member/updatemember', 'memberid=' . $member_id . '&newsletter=1');
+        $this->request('member/updatemember', 'memberid=' . $member_id . '&newsletter=1');
     }
 
     // Unsusbscribe from newsletter
     public function unsubscribeMember($member_id): void
     {
-        $member = $this->request('member/updatemember', 'memberid=' . $member_id . '&newsletter=0');
+        $this->request('member/updatemember', 'memberid=' . $member_id . '&newsletter=0');
     }
 
     /** Member Functions END */
 
     /** General Functions START */
-    public function getClubs()
+    public function getClubs(): array
     {
         $clubs = [];
 
@@ -133,13 +136,13 @@ class ClubPlanner
     // Get Options for club, not used in OmniMove
     public function getOptions(): void
     {
-        dd($this->request('member/GetOptions'));
+        var_dump($this->request('member/GetOptions'));
     }
 
     // Get Statusses for club, Only used for "student"
     public function getStatusses(): void
     {
-        dd($this->request('member/GetStatusses'));
+        var_dump($this->request('member/GetStatusses'));
     }
 
     public function updateStatus($memberId, $statusId): void
@@ -150,14 +153,14 @@ class ClubPlanner
     // Empty result, not used by OmniMove?
     public function getSubscriptionOptions($subscriptionId): void
     {
-        dd($this->request('member/GetSubscriptionOptions', 'ownerid=1&subid=' . $subscriptionId));
+        var_dump($this->request('member/GetSubscriptionOptions', 'ownerid=1&subid=' . $subscriptionId));
     }
 
     /** General Functions END */
     /** Subscriptions Functions START */
 
     // Get different subscriptions (abonnementen)
-    public function getSubscriptions()
+    public function getSubscriptions(): array
     {
         $subscriptions = [];
 
@@ -189,7 +192,6 @@ class ClubPlanner
          * Proefles = 10
          * Comfort Start = 140.
          */
-        $i = 0;
 
         return $this->request('member/GetMemberSubscriptions', 'fromdate=' . $fromdate . '&todate=' . $todate . $subscriptionIdQuery . $ownerQuery);
     }
@@ -214,7 +216,7 @@ class ClubPlanner
     // Checkins
     public function getCountvisits(): void
     {
-        dd($this->request('member/GetCountvisits', 'fromdate=31-07-2018 00:00&todate=31-07-2018 23:59&owner=1'));
+        var_dump($this->request('member/GetCountvisits', 'fromdate=31-07-2018 00:00&todate=31-07-2018 23:59&owner=1'));
 
         /*
          * Parameters:
@@ -234,17 +236,17 @@ class ClubPlanner
 
     public function getSubscriptionGroups(): void
     {
-        dd($this->request('planner/GetSubscriptionGroups'));
-    }
-
-    public function getCalendarItems($date, $calendarId, $days = 1, $employeeId = 0)
-    {
-        return $this->request('planner/GetCalendarItems', 'id=' . $calendarId . '&date=' . $date . '&days=' . $days . '&employeeid=' . $employeeId);
+        var_dump($this->request('planner/GetSubscriptionGroups'));
     }
 
     public function getCalendarItem($calendarItemId)
     {
         return $this->request('planner/GetCalendarItem', 'id=' . $calendarItemId);
+    }
+
+    public function getCalendarItems($date, $calendarId, $days = 1, $employeeId = 0)
+    {
+        return $this->request('planner/GetCalendarItems', 'id=' . $calendarId . '&date=' . $date . '&days=' . $days . '&employeeid=' . $employeeId);
     }
 
     public function updateCalendarItem($calendarItemId, $values)
@@ -305,16 +307,14 @@ class ClubPlanner
         return $this->request('employee/GetEmployee', 'id=' . $employeeId);
     }
 
-    public function updateSubscription(int $subscriptionId, array $parameters = [])
+    public function updateSubscription(): void
     {
-        $parameterQueryString = http_build_query($parameters);
-
-        return $this->request('member/UpdateSubscription', "id={$subscriptionId}&from=API&{$parameterQueryString}");
+        $this->request('member/UpdateSubscription', 'id=92003&from=API&amount=50');
     }
 
-    public function updateSubscriptionAmount(int $subscriptionId, float $amount)
+    public function updateSubscriptionAmount(int $subscriptionId, float $amount): void
     {
-        return $this->request('member/UpdateSubscription', "id={$subscriptionId}&from=API&amount={$amount}");
+        $this->request('member/UpdateSubscription', "id={$subscriptionId}&from=API&amount={$amount}");
     }
 
     public function deleteSubscription($subscriptionId): void
@@ -343,41 +343,23 @@ class ClubPlanner
 
     public function verifyPassword($memberId, $password)
     {
-        return $this->request('member/VerifyPassword', 'email=' . $memberId . '&password=' . $password . '&from=API');
+        $userField = str_contains($memberId, '@') ? 'email' : 'memberid';
+
+        return $this->request('member/VerifyPassword', $userField . '=' . $memberId . '&password=' . $password . '&from=API');
     }
 
-    public function noCache(): static
+
+    private function postRequest($action, $postParameters = [])
     {
-        $this->cacheResults = false;
+        $url = 'https://' . $this->api_url . "/api/{$action}";
+        $postParameters['token'] = $this->api_token;
 
-        return $this;
-    }
-
-    public function useCache(): static
-    {
-        $this->cacheResults = true;
-
-        return $this;
-    }
-
-    private function postRequest($action, $postParameters = []): void
-    {
-        $url = 'https://' . config('services.clubplanner.url') . "/api/{$action}";
-        $postParameters['token'] = config('services.clubplanner.token');
-
-        $res = Http::post($url, $postParameters);
+        return $this->httpClient->request('POST', $url, ['form_params' => $postParameters])->getBody();
     }
 
     private function request($action, $parameters = '', $filter = '')
     {
-        $cacheKey = md5($action . $parameters . $filter);
-
-        if ($this->cacheResults === false) {
-            Cache::forget($cacheKey);
-        }
-
-        return Cache::remember($cacheKey, 3600, function () use ($action, $parameters, $filter) {
-            $url = 'https://' . config('services.clubplanner.url') . "/api/{$action}?token=" . config('services.clubplanner.token');
+            $url = 'https://' . $this->api_url . "/api/{$action}?token=" . $this->api_token;
 
             if ($parameters !== '') {
                 $url .= "&{$parameters}";
@@ -387,11 +369,10 @@ class ClubPlanner
                 $filter = urlencode($filter);
                 $url .= "&filter={$filter}";
             }
-            // $res = $this->guzzle->request('GET', $url);
-            $res = Http::get($url);
 
-            return json_decode($res->body());
-        });
+            $res = $this->httpClient->request('GET', $url);
+
+            return json_decode(utf8_encode($res->getBody()));
     }
 
     public function getPosSaleItems(int $gymID, string $date, int $days)
