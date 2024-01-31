@@ -382,7 +382,7 @@ class ClubPlanner
 
     public function addPosItem(int $gymID, $totalAmount, $itemName, $revenueGroupId, $payMethodId, $vat, $memberId, $quantity = 1, $createdOn = 'today', $posPointId = 1)
     {
-        return $this->request('pos/AddPosItem', http_build_query([
+        $data = [
             'ownerid' => $gymID,
             'totalamount' => $totalAmount,
             'itemname' => $itemName,
@@ -391,6 +391,12 @@ class ClubPlanner
             'vat' => $vat,
             'memberid' => $memberId,
             'quantity' => $quantity,
-        ]));
+        ];
+
+        if($createdOn !== 'today') {
+            $data['createdon'] = $createdOn;
+        }
+
+        return $this->request('pos/AddPosItem', http_build_query($data));
     }
 }
