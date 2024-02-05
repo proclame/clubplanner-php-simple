@@ -380,7 +380,7 @@ class ClubPlanner
         return $this->request('pos/GetPosSaleItems', 'date=' . $date . '&ownerid=' . $gymID . '&days=' . $days . '&from=API');
     }
 
-    public function addPosItem(int $gymID, $totalAmount, $itemName, $revenueGroupId, $payMethodId, $vat, $memberId, $quantity = 1, $createdOn = 'today', $posPointId = 1)
+    public function addPosItem(int $gymID, $totalAmount, $itemName, $revenueGroupId, $payMethodId, $vat, $memberId, $quantity = 1, $createdOn = 'today', $note = '', $extrainfo = '', $posPointId = 1)
     {
         $data = [
             'ownerid' => $gymID,
@@ -391,6 +391,8 @@ class ClubPlanner
             'vat' => $vat,
             'memberid' => $memberId,
             'quantity' => $quantity,
+            'note' => $note,
+            'extrainfo' => $extrainfo,
         ];
 
         if($createdOn !== 'today') {
